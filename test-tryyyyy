@@ -1,0 +1,62 @@
+import pickle
+import helpers
+import extract_features as exf
+import os
+from os import listdir
+from os import path
+from os.path import isfile, join
+
+
+model = pickle.load(open('tuned_rfc.sav', 'rb'))
+norm= pickle.load(open('norm_dict.pkl','rb'))
+
+data_path = "no"
+pos_images = [str(data_path + "/" +f) for f in listdir(data_path) if isfile(join(data_path, f))]
+
+preds = []
+c=0
+for im_path in pos_images[:100]:
+    # print(im_path)
+    preprocessing = helpers.Preprocessing()
+    preprocessing.preproces(im_path)
+    preprocessing.binarization()
+    preprocessing.removingSkul()
+    preprocessing.enhanceImage()
+    preprocessing.segmentation()
+    preprocessing.getInfectedRegion()
+    
+    roi_path = 'tmp/' + im_path.split('/')[-1]
+    #print(roi_path)
+    if path.exists(roi_path):
+        print("c1")
+        df = exf.extract_features(roi_path)
+        df.loc[0:,'Mean'] = (df['Mean']) / norm['Mean']
+        df.loc[0:,'ASM'] = (df['ASM']  / norm['ASM']) 
+        df.loc[0:,'contrast'] = (df['contrast']) / norm['contrast']
+        df.loc[0:,'correlation'] = (df['correlation']  /  norm['correlation']) 
+        df.loc[0:,'dissimilarity'] = (df['dissimilarity'] / norm['dissimilarity'])
+        df.loc[0:,'energy'] = (df['energy']  /  norm['energy'])
+        df.loc[0:,'kurtosis'] = (df['kurtosis'] /  norm['kurtosis'])
+        df.loc[0:,'skew'] = (df['skew']  / norm['skew'])
+        df.loc[0:,'Standard Deviation'] = (df['Standard Deviation']  / norm['Standard Deviation'])
+        df.loc[0:,'area'] = (df['area']) / norm['area']
+        df.loc[0:,'homogeneity'] = (df['homogeneity']  / norm['homogeneity']) 
+        df.loc[0:,'orientation'] = (df['orientation']  /  norm['orientation']) 
+        df.loc[0:,'convex_area'] = (df['convex_area'] / norm['convex_area'])
+        df.loc[0:,'eccentricity'] = (df['eccentricity'] /  norm['eccentricity'])
+        pred = model.predict(df)
+        #print(pred)
+        print()
+        preds.append(pred[0])
+        if(pred[0]==1):
+            c+=1
+
+    else:
+        pred = 0
+        #print(pred)  
+        preds.append(pred)  
+        
+    
+
+print(preds)
+print(c)

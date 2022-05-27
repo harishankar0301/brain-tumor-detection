@@ -1,0 +1,7 @@
+FLASK
+scikit-image
+pandas
+numpy
+opencv-python-headless
+scipy
+sklearn
